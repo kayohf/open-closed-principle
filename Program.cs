@@ -14,6 +14,7 @@ var largeSizeSpec = new SizeSpecification(Size.Large);
 
 var gerrLargeAndSpec = new AndSpecification<Product>(greenColorSpec, largeSizeSpec);
 var greenLargeAndSpec = greenColorSpec & largeSizeSpec;
+var greenLargeAndSpecClean = Color.Green.And(Size.Large);
 
 // Utilizando o filtro normal
 Console.WriteLine("Filtro normal");
@@ -37,6 +38,12 @@ foreach (var pr in productFilterOCP.Filter(products, gerrLargeAndSpec)) {
 // Utilizando o filtro OCP com AndSpecification e operador
 Console.WriteLine("Filtro OCP + AndSpec & Operator");
 foreach (var pr in productFilterOCP.Filter(products, greenLargeAndSpec)) {
+    Console.WriteLine(pr);
+}
+
+// Utilizando o filtro OCP com AndSpecification e operador
+Console.WriteLine("Filtro OCP + AndSpec & Operator + Clean");
+foreach (var pr in productFilterOCP.Filter(products, greenLargeAndSpecClean)) {
     Console.WriteLine(pr);
 }
 
@@ -133,5 +140,15 @@ public class SizeSpecification : SpecificationAbstract<Product> {
  
     public override bool IsSatisfied(Product product) {
         return product.size == _size;
+    }
+}
+
+// Criar uma extensao de Color para colocar um And
+public static class ColorExtensions {
+    public static AndSpecification<Product> And(this Color color, Size size) {
+        return new AndSpecification<Product>(
+            new ColorSpecification(color),
+            new SizeSpecification(size)
+        );
     }
 }
