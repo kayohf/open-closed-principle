@@ -13,6 +13,7 @@ var greenColorSpec = new ColorSpecification(Color.Green);
 var largeSizeSpec = new SizeSpecification(Size.Large);
 
 var gerrLargeAndSpec = new AndSpecification<Product>(greenColorSpec, largeSizeSpec);
+var greenLargeAndSpec = greenColorSpec & largeSizeSpec;
 
 // Utilizando o filtro normal
 Console.WriteLine("Filtro normal");
@@ -30,6 +31,12 @@ foreach (var pr in productFilterOCP.Filter(products, greenColorSpec)) {
 // Utilizando o filtro OCP com AndSpecification
 Console.WriteLine("Filtro OCP + AndSpec");
 foreach (var pr in productFilterOCP.Filter(products, gerrLargeAndSpec)) {
+    Console.WriteLine(pr);
+}
+
+// Utilizando o filtro OCP com AndSpecification e operador
+Console.WriteLine("Filtro OCP + AndSpec & Operator");
+foreach (var pr in productFilterOCP.Filter(products, greenLargeAndSpec)) {
     Console.WriteLine(pr);
 }
 
@@ -60,18 +67,9 @@ public class ProductFilter {
 }
 
 // Filtro utilizando OpenClosedPrinciple
-
-public interface ISpecification<T> {
-    bool IsSatisfied(T item);
-}
-
-public interface IFilter<T> {
-    IEnumerable<T> Filter(IEnumerable<T> items, ISpecification<T> spec);
-}
-
 public class ProductFilterOCP : IFilter<Product>
 {
-    public IEnumerable<Product> Filter(IEnumerable<Product> items, ISpecification<Product> spec)
+    public IEnumerable<Product> Filter(IEnumerable<Product> items, SpecificationAbstract<Product> spec)
     {
         foreach (var i in items) {
             if (spec.IsSatisfied(i)) yield return i;
@@ -79,21 +77,40 @@ public class ProductFilterOCP : IFilter<Product>
     }
 }
 
-public class AndSpecification<T> : ISpecification<T>
-{
-    private readonly ISpecification<T> _primeiro, _segundo;
+// Especificacoes e abstracoes
 
-    public AndSpecification(ISpecification<T> primeiro, ISpecification<T> segundo) {
+public abstract class SpecificationAbstract<T> {
+    public abstract bool IsSatisfied(T p);
+
+    public static SpecificationAbstract<T> operator
+        &(SpecificationAbstract<T> primeiro, SpecificationAbstract<T> segundo) {
+            return new AndSpecification<T>(primeiro, segundo);   
+        }
+}
+
+// public interface ISpecification<T> {
+//     bool IsSatisfied(T item);
+// }
+
+public interface IFilter<T> {
+    IEnumerable<T> Filter(IEnumerable<T> items, SpecificationAbstract<T> spec);
+}
+
+public class AndSpecification<T> : SpecificationAbstract<T>
+{
+    private readonly SpecificationAbstract<T> _primeiro, _segundo;
+
+    public AndSpecification(SpecificationAbstract<T> primeiro, SpecificationAbstract<T> segundo) {
         _primeiro = primeiro;
         _segundo = segundo;
     }
-    public bool IsSatisfied(T item)
+    public override bool IsSatisfied(T item)
     {
         return _primeiro.IsSatisfied(item) && _segundo.IsSatisfied(item);
     }
 }
 
-public class ColorSpecification : ISpecification<Product>
+public class ColorSpecification : SpecificationAbstract<Product>
 {
     private Color _color;
     
@@ -101,20 +118,20 @@ public class ColorSpecification : ISpecification<Product>
         _color = color;
     }
 
-    public bool IsSatisfied(Product product)
+    public override bool IsSatisfied(Product product)
     {
         return product.color == _color;
     }
 }
 
-public class SizeSpecification : ISpecification<Product> {
+public class SizeSpecification : SpecificationAbstract<Product> {
     private Size _size;
 
     public SizeSpecification(Size size) {
         _size = size;
     }
  
-    public bool IsSatisfied(Product product) {
+    public override bool IsSatisfied(Product product) {
         return product.size == _size;
     }
 }
